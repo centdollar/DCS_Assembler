@@ -1,0 +1,7 @@
+*.swp
+*.asm
+*.mif
+*.7z
+*.zip
+temp
+__pycache__/*
