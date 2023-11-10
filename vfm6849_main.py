@@ -256,7 +256,7 @@ def writeoutOffsets(File, decodedFile):
             # print(line)
             # f.write(str(line) + ':' + decodedFile[line] + ';' + '\n')
             f.write(decodedFile[line][0:-1]  + '  %  ' + decodedComment[line] + '  %' +'\n')
-        f.write('[{} .. {}] : 00000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(len(decodedFile), DATA_DEPTH - len(constSecConsts) - 1))
+        f.write('[{} .. {}] : 11111111111111; %EMPTY MEMORY LOCATIONS %\n'.format(len(decodedFile), DATA_DEPTH - len(constSecConsts) - 1))
         for i in range(len(constSecConstsKey)):
             y = len(constSecConstsKey) - i
             curr_constant = constSecConsts[constSecConstsKey[i]][0]
