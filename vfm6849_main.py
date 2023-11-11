@@ -169,6 +169,9 @@ def syntax_check_x_decode(asmFile):
             continue
         curr_decodedLine = ''
 
+        if splitLine[0] == '//':
+            continue
+
         if currentSection == '':
             if splitLine[0] == '.code':
                 currentSection = '.code'
