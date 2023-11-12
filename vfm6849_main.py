@@ -123,7 +123,7 @@ def decode_symbol(symbolIndex, symbol, decodedLine, currentLine, comment):
         else:
             # decode memory location for the load and store and then add it to iw1
             # print('symbol:' + symbol)
-            iw1 = decode_memory_hex(symbol[2:-1])[2:].zfill(14)
+            iw1 = decode_memory_hex(symbol[2:-1]).zfill(14)
             comment = comment + symbol + ' '
             decode_info = [decodedLine, iw1, 1, comment, 0]
             # print(decode_info)
