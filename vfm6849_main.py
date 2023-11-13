@@ -6,7 +6,10 @@ import vfm6849_SymbolInfo
 valid_start_symbols = vfm6849_SymbolInfo.valid_start_symbols
 flow_control_symbols = vfm6849_SymbolInfo.flow_control_symbols
 
-ASM_FILE = 'cache_asm.asm'
+ASM_FILE = 'simd_labcode.asm'
+# ASM_FILE = 'cache_asm.asm'
+
+count = 0
 
 # Open the files from command line below using like file pointers or look up best practice
 lineNumber = 0
@@ -63,6 +66,11 @@ def decode_symbol(symbolIndex, symbol, decodedLine, currentLine, comment):
 
     # Checks if label appears in the first symbol of the line
     # This would be a destination point and we store that for later use
+
+    global count
+    count = count + 1
+    print(count)
+    print(symbol[0])
     if (symbol[0] == '@') and (symbolIndex == 0):
         label.append([symbol[1:], currentLine])
         comment = comment + symbol + ' '
@@ -116,9 +124,14 @@ def decode_symbol(symbolIndex, symbol, decodedLine, currentLine, comment):
 
     # print(symbol[0:1])
     if symbol[0:2] == 'm[':
+        newSymbol = symbol[2:]
         if (symbol[2:-1] in constSecConstsKey):
             iw1 = decode_memory_hex(constSecConsts[symbol[2:-1]][0]).zfill(14)
             comment = comment + symbol + ' '
+            decode_info = [decodedLine, iw1, 1, comment, 0]
+        elif (newSymbol in constantsKey):
+            iw1 = decode_memory_hex(constants[newSymbol]).zfill(14)
+            comment = comment + symbol + '] '
             decode_info = [decodedLine, iw1, 1, comment, 0]
         else:
             # decode memory location for the load and store and then add it to iw1
