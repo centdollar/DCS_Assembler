@@ -6,7 +6,10 @@ import vfm6849_SymbolInfo
 valid_start_symbols = vfm6849_SymbolInfo.valid_start_symbols
 flow_control_symbols = vfm6849_SymbolInfo.flow_control_symbols
 
-ASM_FILE = 'simd_labcode.asm'
+ASM_FILE = 'dcs_lab11_part1.asm'
+# ASM_FILE = 'dcs_lab10.asm'
+# ASM_FILE = 't_memory.asm'
+# ASM_FILE = 'simd_labcode.asm'
 # ASM_FILE = 'cache_asm.asm'
 
 count = 0
@@ -225,8 +228,9 @@ def syntax_check_x_decode(asmFile):
 
 
         if (currentSection == '.code'):
+            print(splitLine)
             for symbol in range(len(splitLine)):
-
+                
                 if splitLine[symbol] in sections:
                     continue
                 if splitLine == '':
