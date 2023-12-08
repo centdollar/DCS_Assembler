@@ -43,6 +43,7 @@ valid_start_symbols = { 'ld'    :'000000',
                         'ret'   :'01110000000000',
                         'in'    :'011101',
                         'out'   :'011110',
-                        'cmp'   :'110000'}
+                        'cmp'   :'110000',
+                        'nop'   :'11100000000000'}
 
 flow_control_symbols = ['ju', 'jc1', 'jn1', 'jv1', 'jz1', 'jc0', 'jn0', 'jv0', 'jz0']

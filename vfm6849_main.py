@@ -6,7 +6,13 @@ import vfm6849_SymbolInfo
 valid_start_symbols = vfm6849_SymbolInfo.valid_start_symbols
 flow_control_symbols = vfm6849_SymbolInfo.flow_control_symbols
 
-ASM_FILE = 'dcs_lab11_part1.asm'
+# ASM_FILE = 'dcs_lab12_core0.asm'
+# ASM_FILE = 'dcs_lab12_core1.asm'
+# ASM_FILE = 'dcs_lab12_core2.asm'
+# ASM_FILE = 'dcs_lab12_core3.asm'
+# ASM_FILE = 'dcs_lab11_part5_intercoretalk.asm'
+ASM_FILE =  'dcs_lab11_part5_intercore1.asm'
+# ASM_FILE = 'dcs_lab11_part3.asm'
 # ASM_FILE = 'dcs_lab10.asm'
 # ASM_FILE = 't_memory.asm'
 # ASM_FILE = 'simd_labcode.asm'
@@ -280,7 +286,7 @@ def writeoutOffsets(File, decodedFile):
             # print(line)
             # f.write(str(line) + ':' + decodedFile[line] + ';' + '\n')
             f.write(decodedFile[line][0:-1]  + '  %  ' + decodedComment[line] + '  %' +'\n')
-        f.write('[{} .. {}] : 11111111111111; %EMPTY MEMORY LOCATIONS %\n'.format(len(decodedFile), DATA_DEPTH - len(constSecConsts) - 1))
+        f.write('[{} .. {}] : 11100000000000; %EMPTY MEMORY LOCATIONS %\n'.format(len(decodedFile), DATA_DEPTH - len(constSecConsts) - 1))
         for i in range(len(constSecConstsKey)):
             y = len(constSecConstsKey) - i
             curr_constant = constSecConsts[constSecConstsKey[i]][0]
