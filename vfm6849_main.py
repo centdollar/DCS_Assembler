@@ -11,12 +11,13 @@ flow_control_symbols = vfm6849_SymbolInfo.flow_control_symbols
 # ASM_FILE = 'dcs_lab12_core2.asm'
 # ASM_FILE = 'dcs_lab12_core3.asm'
 # ASM_FILE = 'dcs_lab11_part5_intercoretalk.asm'
-ASM_FILE =  'dcs_lab11_part5_intercore1.asm'
+# ASM_FILE =  'dcs_lab11_part5_intercore1.asm'
 # ASM_FILE = 'dcs_lab11_part3.asm'
 # ASM_FILE = 'dcs_lab10.asm'
 # ASM_FILE = 't_memory.asm'
 # ASM_FILE = 'simd_labcode.asm'
 # ASM_FILE = 'cache_asm.asm'
+ASM_FILE = 'dataforwardtest.asm'
 
 count = 0
 
@@ -59,7 +60,7 @@ def decode_memory_hex(symbol):
 
 
 # Checks current symbol in line and decodes it
-def decode_symbol(symbolIndex, symbol, decodedLine, currentLine, comment):
+def decode_symbol(symbolIndex, symbol, decodedLine, currentLine, comment, splitLine):
     global label
     # first index is the decoded values
     # second is the iw1 value   value of 'f' means no iw1
@@ -78,8 +79,8 @@ def decode_symbol(symbolIndex, symbol, decodedLine, currentLine, comment):
 
     global count
     count = count + 1
-    print(count)
-    print(symbol[0])
+    #print(count)
+    #print(symbol[0])
     if (symbol[0] == '@') and (symbolIndex == 0):
         label.append([symbol[1:], currentLine])
         comment = comment + symbol + ' '
@@ -100,7 +101,7 @@ def decode_symbol(symbolIndex, symbol, decodedLine, currentLine, comment):
 
         # Throw error if register index is over 15
         if int(symbol[1:]) > 15:
-            decode_info = ['', 'f', 0, comment, 1 ]
+            decode_info = ['Register out of bounds: {} > 15'.format(int(symbol[1:])), 'f', 0, comment, 1 ]
             return decode_info
         else:
             if(decodedLine[0:6] == "000100"):
@@ -121,9 +122,13 @@ def decode_symbol(symbolIndex, symbol, decodedLine, currentLine, comment):
             
         return decode_info
 
+    list = ['addc', 'subc', 'cmp']
     if symbol[0] == '#':
-        if int(symbol[1:]) > 15:
-            decode_info = ['', 'f', 0, comment, 1 ]
+        if (int(symbol[1:]) > 15):
+            decode_info = ['Constant out of bounds: {} > 15'.format(int(symbol[1:])), 'f', 0, comment, 1 ]
+            return decode_info
+        elif (splitLine[0] not in list):
+            decode_info = ['Constant used out of context', 'f', 0, comment, 1 ]
             return decode_info
         else:
             decodedLine = decodedLine + decode_int(symbol[1:])
@@ -234,7 +239,7 @@ def syntax_check_x_decode(asmFile):
 
 
         if (currentSection == '.code'):
-            print(splitLine)
+            #print(splitLine)
             for symbol in range(len(splitLine)):
                 
                 if splitLine[symbol] in sections:
@@ -243,7 +248,7 @@ def syntax_check_x_decode(asmFile):
                     continue
                 
                 # Get the list of attributes from the current symbol
-                decoded_symbol = decode_symbol(symbol, splitLine[symbol], decoded_symbol[0], instructionCount, decoded_symbol[3]) 
+                decoded_symbol = decode_symbol(symbol, splitLine[symbol], decoded_symbol[0], instructionCount, decoded_symbol[3], splitLine) 
                 if(decoded_symbol[4] == 1):
                     print("ERROR: Line {} with decodeded symbol: {}".format((assemblyLine + 1), decoded_symbol))
 
