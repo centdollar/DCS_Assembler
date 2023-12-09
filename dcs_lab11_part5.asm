@@ -136,97 +136,80 @@ addc r11 #1
 @RowCalc nop
 ld r5 r1 m[matrix1]
 addc r5 #1
-nop
 ld r5 r2 m[matrix1]
 addc r5 #1
-nop
 ld r5 r3 m[matrix1]
 addc r5 #1
-nop
 ld r5 r4 m[matrix1]
 addc r5 #1
 
 @ColLoop nop
 ld r11 r6 m[matrix2]
 addc r11 #4
-nop
 ld r11 r7 m[matrix2]
 addc r11 #4
-nop
 ld r11 r8 m[matrix2]
 addc r11 #4
-nop
 ld r11 r9 m[matrix2]
 addc r11 #4
-nop
 
 cpy r12 r1
-nop
 cpy r13 r2
-nop
 cpy r14 r3
-nop
 cpy r15 r4
-nop
 
 mul r6 r12
-nop
 mul r7 r13
-nop
 mul r8 r14
-nop
 mul r9 r15
 
 add r12 r13
 add r12 r14
 add r12 r15
-nop
 sub r13 r13
 sub r14 r14
 addc r13 #4
 addc r14 #4
-nop
 sub r14 r0
-nop
 mul r14 r13
-nop
 sub r14 r14
 addc r14 #4
-nop
 sub r14 r10
-nop
 add r14 r13
 
-nop
 st r14 r12 m[resultant]
-nop
 
 
 
 subc r11 #15
 subc r10 #1
 jz0 r1 @ColLoop
-nop
 
 sub r11 r11
 addc r11 #1
-nop
 addc r10 #4
-nop
 
 
 subc r0 #1
 jz0 r1 @RowCalc
 
 
-nop
-nop
+sub r10 r10
+@displayResult nop
+ld r10 r9 m[resultant]
+addc r10 #1
+cmp r10 #15
+jz0 r1 @displayResult
+
+
+
+
 
 sub r10 r10
 nop
 addc r10 #5
 nop
-out r5 r0
+out r10 r0
 
 @done nop
 nop

@@ -12,12 +12,12 @@ flow_control_symbols = vfm6849_SymbolInfo.flow_control_symbols
 # ASM_FILE = 'dcs_lab12_core3.asm'
 # ASM_FILE = 'dcs_lab11_part5_intercoretalk.asm'
 # ASM_FILE =  'dcs_lab11_part5_intercore1.asm'
-# ASM_FILE = 'dcs_lab11_part3.asm'
+ASM_FILE = 'dcs_lab11_part5.asm'
 # ASM_FILE = 'dcs_lab10.asm'
 # ASM_FILE = 't_memory.asm'
 # ASM_FILE = 'simd_labcode.asm'
 # ASM_FILE = 'cache_asm.asm'
-ASM_FILE = 'dataforwardtest.asm'
+# ASM_FILE = 'dataforwardtest.asm'
 
 count = 0
 
@@ -122,7 +122,7 @@ def decode_symbol(symbolIndex, symbol, decodedLine, currentLine, comment, splitL
             
         return decode_info
 
-    list = ['addc', 'subc', 'cmp']
+    list = ['addc', 'subc', 'cmp', 'rrz', 'srl', 'sra', 'rotl', 'rotr', 'rln', 'rlz', 'rrn', 'vaddc', 'vsubc']
     if symbol[0] == '#':
         if (int(symbol[1:]) > 15):
             decode_info = ['Constant out of bounds: {} > 15'.format(int(symbol[1:])), 'f', 0, comment, 1 ]
