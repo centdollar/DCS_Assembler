@@ -2,22 +2,24 @@ import vfm6849_SymbolInfo
 valid_start_symbols = vfm6849_SymbolInfo.valid_start_symbols
 
 assemblyFile = "test.asm"
-reg = {'r0':'00000', 'r1':'00001'}
+reg = {'r0':'00000', 'r1':'00001', 'r2':'00010', 'r3':'00011', 'r4':'00100', 'r5':'00101', 'r6':'00110', 'r7':'00111'}
 
 class Section:
     def __init__(self, sectName):
         self.sectName = sectName
     def disp(self):
-        print(self.sectName)
-        print(self.startIndex)
-        print(self.endIndex)
-        print(self.data)
-        print(self.translatedData)
+        print("sectName         : " + self.sectName)
+        print("startIndex       : " + str(self.startIndex))
+        print("endIndex         : " + str(self.endIndex))
+        print("data             : " + str(self.data))
+        print("translatedData   : " + str(self.translatedData))
+        print("originalLineNum  : " + str(self.originalLineNum))
     
     sectName = ''
     startIndex = 0
     endIndex = 0
     data = []
+    originalLineNum = []
     translatedData = []
     
     
@@ -41,9 +43,35 @@ def translateSections(sectList):
             for line in range(len(sect.data)):
                 # split line into tokens
                 token = sect.data[line].split(" ")
-                # add instr
-                if (token[0] == 'add' and (token[1] in reg) and (token[2] in reg)):
+
+                # add 
+                if (token[0] == 'add'):
+                    if (token[1] not in reg):
+                        print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
+                        continue
+                    if (token[2] not in reg):
+                        print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
+                        continue
                     sect.translatedData.append('0101' + reg[token[1]] + reg[token[2]])
+
+
+                # addc
+                elif (token[0] == 'addc'):
+                    if(token[1] not in reg):
+                        print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
+                        continue
+                    if(token[2][0] != "#"):
+                        print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
+                        continue
+                    if(int(token[2][1:]) > 31):
+                        print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
+                        continue
+                    sect.translatedData.append('0110' + reg[token[1]] + "{0:b}".format(int(token[2][1:])))
+                
+                
+                
+                else:
+                    print("Error: Invalid Syntax -> {}".format(token))
     
         translateList.append(sect)
 
@@ -57,10 +85,17 @@ def parseSections(sectList):
     retList = []
     for sect in sectList:
         if (sect.sectName == 'data'):
+
+            for line in range(len(sect.data)):
+                if sect.data[line] == "":
+                    continue
+                else:
+                    sect.originalLineNum.append(line + 2)
             # remove empty spaces
             while ("" in sect.data):
                 sect.data.remove("")
         retList.append(sect)
+    # sectList[0].disp()
     return retList
 
 
