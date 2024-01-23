@@ -21,7 +21,7 @@ reg = {'r0' :'00000', 'r1' :'00001', 'r2' :'00010', 'r3' :'00011', 'r4' :'00100'
        'r24':'11000', 'r25':'11001', 'r26':'11010', 'r27':'11011', 'r28':'11100', 'r29':'11101', 'r30':'11110', 'r31':'11111'}
 
 MIF_FILE_HEADER = 'WIDTH = 16;\n' + 'DEPTH = 16384;\n' + 'ADDRESS_RADIX = DEC;\n' + 'DATA_RADIX = BIN;\n\n\n' + 'CONTENT BEGIN\n'
-
+ADDR_RANGE = 16384
 
 class Section:
     def __init__(self, sectName):
@@ -61,10 +61,12 @@ def main():
 
 
 def writeOutMifFile(sectList):
-    with open("abcd.mif", "w") as f:
+    with open("test16.mif", "w") as f:
         f.write(MIF_FILE_HEADER)
         for index in range(len(sectList[0].translatedData)):
             f.write("{}:{};\n".format(index, sectList[0].translatedData[index]))
+        f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(index + 1, ADDR_RANGE - 1))
+        f.write('END;\n')
 
 def calculateJumps(sectList):
     postJumpCalc = []
