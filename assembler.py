@@ -3,13 +3,25 @@ instructionDict = vfm6849_SymbolInfo.valid_start_symbols
 
 assemblyFile = "test.asm"
 
-regRegInstr = {'add'   :'000101', 'sub'   :'000110', 'and'   :'001010', 'or'    :'001011', 'vadd'  :'001110', 'vsub'  :'001111', 'mul'   :'010000', 'div'   :'010001', 'xor'   :'010010', 'in'    :'011101', 'out'   :'011110', 'swp'   :'000011', 'cpy'   :'000010',}
-regImmedInstr = {'addc'  :'000111', 'subc'  :'001000', 'rrc'   :'001101', 'srl'   :'010011', 'sra'   :'010100', 'rotl'  :'010101', 'rotr'  :'010110', 'rln'   :'010111', 'rlz'   :'011000', 'rrn'   :'011001', 'rrz'   :'011010'}
+regRegInstr =   {'add'   :'000101', 'sub'   :'000110', 'and'   :'001010', 'or'    :'001011', 'vadd'  :'001110', 'vsub'  :'001111', 
+                 'mul'   :'010000', 'div'   :'010001', 'xor'   :'010010', 'in'    :'011101', 'out'   :'011110', 'swp'   :'000011', 
+                 'cpy'   :'000010'}
 
-jumpInstr = {'ju'    :'000100*0000', 'jc1'   :'000100*1000', 'jn1'   :'000100*0100', 'jv1'   :'000100*0010', 'jz1'   :'000100*0001', 'jc0'   :'000100*0111', 'jn0'   :'000100*1011', 'jv0'   :'000100*1101', 'jz0'   :'000100*1110',}
+regImmedInstr = {'addc'  :'000111', 'subc'  :'001000', 'rrc'   :'001101', 'srl'   :'010011', 'sra'   :'010100', 'rotl'  :'010101', 
+                 'rotr'  :'010110', 'rln'   :'010111', 'rlz'   :'011000', 'rrn'   :'011001', 'rrz'   :'011010'}
+
+jumpInstr = {'ju'  :'000100*00000', 'jc1'   :'000100*10000', 'jn1'   :'000100*01000', 'jv1'   :'000100*00100', 'jz1'   :'000100*00010', 
+             'jc0' :'000100*01110', 'jn0'   :'000100*10110', 'jv0'   :'000100*11010', 'jz0'   :'000100*11100'}
 
 
-reg = {'r0':'00000', 'r1':'00001', 'r2':'00010', 'r3':'00011', 'r4':'00100', 'r5':'00101', 'r6':'00110', 'r7':'00111'}
+
+reg = {'r0' :'00000', 'r1' :'00001', 'r2' :'00010', 'r3' :'00011', 'r4' :'00100', 'r5' :'00101', 'r6' :'00110', 'r7' :'00111', 
+       'r8' :'01000', 'r9' :'01001', 'r10':'01010', 'r11':'01011', 'r12':'01100', 'r13':'01101', 'r14':'01110', 'r15':'01111',
+       'r16':'10000', 'r17':'10001', 'r18':'10010', 'r19':'10011', 'r20':'10100', 'r21':'10101', 'r22':'10110', 'r23':'10111', 
+       'r24':'11000', 'r25':'11001', 'r26':'11010', 'r27':'11011', 'r28':'11100', 'r29':'11101', 'r30':'11110', 'r31':'11111'}
+
+MIF_FILE_HEADER = 'WIDTH = 16;\n' + 'DEPTH = 16384;\n' + 'ADDRESS_RADIX = DEC;\n' + 'DATA_RADIX = BIN;\n\n\n' + 'CONTENT BEGIN\n'
+
 
 class Section:
     def __init__(self, sectName):
@@ -43,11 +55,16 @@ def main():
     sectList = parseSections(sectList)
     sectList = translateSections(sectList)
     sectList = calculateJumps(sectList)
+    writeOutMifFile(sectList)
     sectList[0].disp()
-
-
-
     return 1
+
+
+def writeOutMifFile(sectList):
+    with open("abcd.mif", "w") as f:
+        f.write(MIF_FILE_HEADER)
+        for index in range(len(sectList[0].translatedData)):
+            f.write("{}:{};\n".format(index, sectList[0].translatedData[index]))
 
 def calculateJumps(sectList):
     postJumpCalc = []
@@ -80,6 +97,13 @@ def translateSections(sectList):
 
                 # Label support
                 if (token[0][0] == '@'):
+
+                    # Check if the label is already in the label dict
+                    if (token[0][1:] not in sect.dataSectionLabels):
+                        sect.dataSectionLabels[token[0][1:]] = line
+                    else: print("Warning: Label already used in line {} used again on line {} -> {}".format(sect.dataSectionLabels[token[0][1:]], line, token[0][1:]))
+
+                    # Check if reg reg instr is used
                     if (token[1] in regRegInstr):
                         if (token[2] not in reg):
                             print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
@@ -87,11 +111,38 @@ def translateSections(sectList):
                         if (token[3] not in reg):
                             print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
                             continue
-                    if (token[0][1:] not in sect.dataSectionLabels):
-                        sect.dataSectionLabels[token[0][1:]] = line
+                        sect.translatedData.append(regRegInstr[token[1]] + reg[token[2]] + reg[token[3]])
+                        continue
                     
-                    sect.translatedData.append(regRegInstr[token[1]] + reg[token[2]] + reg[token[3]])
+                    # Check if a reg imm instr is used
+                    if (token[1] in regImmedInstr):
+                        if(token[2] not in reg):
+                            print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
+                            continue
+                        if(token[3][0] != "#"):
+                            print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
+                            continue
+                        if(int(token[3][1:]) > 31):
+                            print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
+                            continue
+                        sect.translatedData.append(regImmedInstr[token[1]] + reg[token[2]] + "{:05b}".format(int(token[2][1:]), 5))
+                        continue
+
+                    # handles jump instructions after a label
+                    if (token[1] in jumpInstr):
+                        if(token[2] not in reg):
+                            print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
+                            continue
+                        if(token[3][0] != "@"):
+                            print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
+                            continue
+                        sect.translatedData.append(jumpInstr[token[1]].replace("*", reg[token[2]]))
+                        sect.translatedData.append(token[3])
+                        continue
                     continue
+
+
+
 
                 # handles instructions with the reg reg parameters
                 if (token[0] in regRegInstr):
@@ -115,9 +166,10 @@ def translateSections(sectList):
                     if(int(token[2][1:]) > 31):
                         print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
                         continue
-                    sect.translatedData.append(regImmedInstr[token[0]] + reg[token[1]] + "{0:b}".format(int(token[2][1:])))
+                    sect.translatedData.append(regImmedInstr[token[0]] + reg[token[1]] + "{:05b}".format(int(token[2][1:]), 5))
                     continue
 
+                # handles jump instructions
                 if (token[0] in jumpInstr):
                     if(token[1] not in reg):
                         print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
@@ -128,9 +180,6 @@ def translateSections(sectList):
                     sect.translatedData.append(jumpInstr[token[0]].replace("*", reg[token[1]]))
                     sect.translatedData.append(token[2])
                     continue
-
-                
-
 
                 else:
                     print("Error: Invalid Syntax -> {}".format(token))
