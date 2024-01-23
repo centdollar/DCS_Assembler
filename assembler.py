@@ -63,7 +63,8 @@ def calculateJumps(sectList):
 
 def calculateOffset(currAddr, labelAddr):
     if currAddr > labelAddr:
-        return twosComp(currAddr - labelAddr, 16)
+        return twosComp(currAddr - labelAddr + 1, 16)
+    else: return labelAddr - currAddr - 1
 
 def twosComp(val, bits):
     val = val - (1 << bits)
