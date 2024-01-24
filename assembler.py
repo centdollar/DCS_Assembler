@@ -8,7 +8,9 @@ regRegInstr =   {'add'   :'000101', 'sub'   :'000110', 'and'   :'001010', 'or'  
                  'cpy'   :'000010'}
 
 regImmedInstr = {'addc'  :'000111', 'subc'  :'001000', 'rrc'   :'001101', 'srl'   :'010011', 'sra'   :'010100', 'rotl'  :'010101', 
-                 'rotr'  :'010110', 'rln'   :'010111', 'rlz'   :'011000', 'rrn'   :'011001', 'rrz'   :'011010'}
+                 'rotr'  :'010110', 'rln'   :'010111', 'rlz'   :'011000', 'rrn'   :'011001', 'rrz'   :'011010', 'cmp'   :'110000'}
+
+
 
 jumpInstr = {'ju'  :'000100*00000', 'jc1'   :'000100*10000', 'jn1'   :'000100*01000', 'jv1'   :'000100*00100', 'jz1'   :'000100*00010', 
              'jc0' :'000100*01110', 'jn0'   :'000100*10110', 'jv0'   :'000100*11010', 'jz0'   :'000100*11100'}
@@ -22,6 +24,8 @@ reg = {'r0' :'00000', 'r1' :'00001', 'r2' :'00010', 'r3' :'00011', 'r4' :'00100'
 
 MIF_FILE_HEADER = 'WIDTH = 16;\n' + 'DEPTH = 16384;\n' + 'ADDRESS_RADIX = DEC;\n' + 'DATA_RADIX = BIN;\n\n\n' + 'CONTENT BEGIN\n'
 ADDR_RANGE = 16384
+
+WRITE_TO_MODELSIM = True
 
 class Section:
     def __init__(self, sectName):
@@ -61,6 +65,21 @@ def main():
 
 
 def writeOutMifFile(sectList):
+    if WRITE_TO_MODELSIM:
+        with open("../DCS/simulation/modelsim/test16.mif", "w") as f:
+            f.write(MIF_FILE_HEADER)
+            for index in range(len(sectList[0].translatedData)):
+                f.write("{}:{};\n".format(index, sectList[0].translatedData[index]))
+            f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(index + 1, ADDR_RANGE - 1))
+            f.write('END;\n')
+    
+    with open("../DCS/test16.mif", "w") as f:
+            f.write(MIF_FILE_HEADER)
+            for index in range(len(sectList[0].translatedData)):
+                f.write("{}:{};\n".format(index, sectList[0].translatedData[index]))
+            f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(index + 1, ADDR_RANGE - 1))
+            f.write('END;\n')
+
     with open("test16.mif", "w") as f:
         f.write(MIF_FILE_HEADER)
         for index in range(len(sectList[0].translatedData)):
@@ -82,8 +101,8 @@ def calculateJumps(sectList):
 
 def calculateOffset(currAddr, labelAddr):
     if currAddr > labelAddr:
-        return twosComp(currAddr - labelAddr + 1, 16)
-    else: return labelAddr - currAddr - 1
+        return twosComp(currAddr - labelAddr, 16)
+    else: return labelAddr - currAddr
 
 def twosComp(val, bits):
     val = val - (1 << bits)
@@ -91,6 +110,7 @@ def twosComp(val, bits):
 
 def translateSections(sectList):
     translateList = []
+    numForLoops = 0
     for sect in sectList:
         if (sect.sectName == 'data'):
             for line in range(len(sect.data)):
@@ -143,8 +163,33 @@ def translateSections(sectList):
                         continue
                     continue
 
+                
+                if (token[0] == 'for'):
+                    if(token[3] >= str(32)):
+                        print("Error: Iterator Amount too high {} -> {}".format(token[3], token))
+                        continue
+                    
+                    sect.dataSectionLabels['for{}'.format(numForLoops)] = line
+                    sect.translatedData.append(regRegInstr['sub'] + reg['r1'] + reg['r1'])
+                    
+                    continue
 
+                
+                if (token[0] == 'endfor'):
+                    if(token[3] >= str(32)):
+                        print("Error: Iterator Check too high {} -> {}".format(token[3], token))
+                        continue
 
+                    sect.translatedData.append(regImmedInstr['addc'] + reg['r1'] + "00001")
+                    sect.translatedData.append(regImmedInstr['cmp'] + reg['r1'] + "{:05b}".format(int(token[3])))
+                    sect.translatedData.append(jumpInstr['jz0'].replace("*", reg['r1']))
+                    sect.translatedData.append('@for{}'.format(numForLoops))
+                    numForLoops = numForLoops + 1
+                    continue
+
+                    # addc r1 #1
+                    # cmp r1 #(#-1)
+                    # jz0
 
                 # handles instructions with the reg reg parameters
                 if (token[0] in regRegInstr):
