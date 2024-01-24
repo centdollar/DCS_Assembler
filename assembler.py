@@ -101,8 +101,8 @@ def calculateJumps(sectList):
 
 def calculateOffset(currAddr, labelAddr):
     if currAddr > labelAddr:
-        return twosComp(currAddr - labelAddr, 16)
-    else: return labelAddr - currAddr
+        return twosComp(currAddr - labelAddr + 1, 16)
+    else: return labelAddr - currAddr - 1
 
 def twosComp(val, bits):
     val = val - (1 << bits)
@@ -169,7 +169,8 @@ def translateSections(sectList):
                         print("Error: Iterator Amount too high {} -> {}".format(token[3], token))
                         continue
                     
-                    sect.dataSectionLabels['for{}'.format(numForLoops)] = line
+                    # The + 1 is used to move the label jump address to be the first instruction in the for loop scope
+                    sect.dataSectionLabels['for{}'.format(numForLoops)] = line + 1
                     sect.translatedData.append(regRegInstr['sub'] + reg['r1'] + reg['r1'])
                     
                     continue
