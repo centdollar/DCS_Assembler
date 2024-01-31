@@ -3,20 +3,67 @@ instructionDict = vfm6849_SymbolInfo.valid_start_symbols
 
 assemblyFile = "test.asm"
 
-regRegInstr =   {'add'   :'000101', 'sub'   :'000110', 'and'   :'001010', 'or'    :'001011', 'vadd'  :'001110', 'vsub'  :'001111', 
-                 'mul'   :'010000', 'div'   :'010001', 'xor'   :'010010', 'in'    :'011101', 'out'   :'011110', 'swp'   :'000011', 
-                 'cpy'   :'000010'}
+regRegInstr = {
+'in'    :'100000', 
+'out'   :'100001',
 
-regImmedInstr = {'addc'  :'000111', 'subc'  :'001000', 'rrc'   :'001101', 'srl'   :'010011', 'sra'   :'010100', 'rotl'  :'010101', 
-                 'rotr'  :'010110', 'rln'   :'010111', 'rlz'   :'011000', 'rrn'   :'011001', 'rrz'   :'011010', 'cmp'   :'110000'}
+'swp'   :'100010', 
+'cpy'   :'100011',
+
+'add'   :'101000', 
+'sub'   :'101001', 
+'mul'   :'101010', 
+'div'   :'101011',
+
+'xor'   :'100100', 
+'and'   :'100101', 
+'or'    :'100110',
+'not'   :'100111',
+
+'vadd'  :'110000', 
+'vsub'  :'110001',
+'vmul'  :'110010', 
+'vdiv'  :'110011'
+}
 
 
+regImmedInstr = {
+'cmp'   :'010000',
 
-jumpInstr = {'ju'  :'000100*00000', 'jc1'   :'000100*10000', 'jn1'   :'000100*01000', 'jv1'   :'000100*00100', 'jz1'   :'000100*00010', 
-             'jc0' :'000100*01110', 'jn0'   :'000100*10110', 'jv0'   :'000100*11010', 'jz0'   :'000100*11100'}
+'srl'   :'010001', 
+'sra'   :'010010',
+'rotl'  :'010011', 
+'rotr'  :'010100', 
+
+'addc'  :'010101', 
+'subc'  :'010110', 
+
+'rrc'   :'011000',
+'rrn'   :'011001', 
+'rrz'   :'011010',
+
+'rln'   :'011100', 
+'rlz'   :'011101'
+}
 
 
-memInstr = {'ld'    :'000000', 'st'    :'000001'}
+jumpInstr = {
+'ju'   :'000100*00000', 
+'jc1'   :'000100*10000', 
+'jn1'   :'000100*01000', 
+'jv1'   :'000100*00100', 
+'jz1'   :'000100*00010', 
+'jc0'   :'000100*01110', 
+'jn0'   :'000100*10110', 
+'jv0'   :'000100*11010', 
+'jz0'   :'000100*11100'
+}
+
+
+memInstr = {
+'ld'    :'000000', 
+'st'     :'000001'
+}
 
 
 reg = {'r0' :'00000', 'r1' :'00001', 'r2' :'00010', 'r3' :'00011', 'r4' :'00100', 'r5' :'00101', 'r6' :'00110', 'r7' :'00111', 
@@ -112,37 +159,36 @@ def writeOutMifFile(codeSect, dataSect):
             f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(index + 1, ADDR_RANGE - 1))
             f.write('END;\n')
 
+        
         # Write out the data to go into MM
         with open("../DCS/simulation/modelsim/test16_MM.mif", "w") as f:
             f.write(MIF_FILE_HEADER)
-            i = 0
+            if not dataSect.dataDict:
+                f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(0, ADDR_RANGE - 1))
+            else:
+                i = 0
+                usedDataSegs = []
 
-            usedDataSegs = []
+                for addr in dataSect.dataDict:
+                    usedDataSegs.append(int(dataSect.dataDict[addr], 16))
 
-            for addr in dataSect.dataDict:
-                usedDataSegs.append(int(dataSect.dataDict[addr], 16))
+                # Loop through all possible addresses
+                # if the current addr is not in usedDataSegs[]
+                    notUsedStart = 0
+                    notUsedEnd = 0
+                for i in range(ADDR_RANGE - 1):
 
-            # Loop through all possible addresses
-            # if the current addr is not in usedDataSegs[]
-                notUsedStart = 0
-                notUsedEnd = 0
-            for i in range(ADDR_RANGE - 1):
+                    if i not in usedDataSegs:
+                        notUsedEnd = notUsedEnd + 1
+                        continue
+                    else:
 
-                if i not in usedDataSegs:
-                    notUsedEnd = notUsedEnd + 1
-                    continue
-                else:
-                    
-                    if notUsedEnd != notUsedStart:
-                        f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(notUsedStart, notUsedEnd - 1))
-                    notUsedStart = i+1
-                    notUsedEnd = i + 1
-                    # index = usedDataSegs.find("i")
-                    f.write("{}:{}; % {} %\n".format(str(i), "0000000000000000", "used"))
-
-
-
-
+                        if notUsedEnd != notUsedStart:
+                            f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(notUsedStart, notUsedEnd - 1))
+                        notUsedStart = i+1
+                        notUsedEnd = i + 1
+                        # index = usedDataSegs.find("i")
+                        f.write("{}:{}; % {} %\n".format(str(i), "0000000000000000", "used"))
             f.write('END;\n')
 
 
@@ -163,31 +209,32 @@ def writeOutMifFile(codeSect, dataSect):
 
     with open("../DCS/test16_MM.mif", "w") as f:
             f.write(MIF_FILE_HEADER)
-            i = 0
+            if not dataSect.dataDict:
+                f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(0, ADDR_RANGE - 1))
+            else:
+                i = 0
+                usedDataSegs = []
 
-            usedDataSegs = []
+                for addr in dataSect.dataDict:
+                    usedDataSegs.append(int(dataSect.dataDict[addr], 16))
 
-            for addr in dataSect.dataDict:
-                usedDataSegs.append(int(dataSect.dataDict[addr], 16))
+                # Loop through all possible addresses
+                # if the current addr is not in usedDataSegs[]
+                    notUsedStart = 0
+                    notUsedEnd = 0
+                for i in range(ADDR_RANGE - 1):
 
-            # Loop through all possible addresses
-            # if the current addr is not in usedDataSegs[]
-                notUsedStart = 0
-                notUsedEnd = 0
-            for i in range(ADDR_RANGE - 1):
+                    if i not in usedDataSegs:
+                        notUsedEnd = notUsedEnd + 1
+                        continue
+                    else:
 
-                if i not in usedDataSegs:
-                    notUsedEnd = notUsedEnd + 1
-                    continue
-                else:
-                    
-                    if notUsedEnd != notUsedStart:
-                        f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(notUsedStart, notUsedEnd - 1))
-                    notUsedStart = i+1
-                    notUsedEnd = i + 1
-                    # index = usedDataSegs.find("i")
-                    f.write("{}:{}; % {} %\n".format(str(i), "0000000000000000", "used"))
-
+                        if notUsedEnd != notUsedStart:
+                            f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(notUsedStart, notUsedEnd - 1))
+                        notUsedStart = i+1
+                        notUsedEnd = i + 1
+                        # index = usedDataSegs.find("i")
+                        f.write("{}:{}; % {} %\n".format(str(i), "0000000000000000", "used"))
             f.write('END;\n')
 
     with open("test16.mif", "w") as f:
@@ -199,31 +246,32 @@ def writeOutMifFile(codeSect, dataSect):
 
     with open("test16_MM.mif", "w")as f:
             f.write(MIF_FILE_HEADER)
-            i = 0
+            if not dataSect.dataDict:
+                f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(0, ADDR_RANGE - 1))
+            else:
+                i = 0
+                usedDataSegs = []
 
-            usedDataSegs = []
+                for addr in dataSect.dataDict:
+                    usedDataSegs.append(int(dataSect.dataDict[addr], 16))
 
-            for addr in dataSect.dataDict:
-                usedDataSegs.append(int(dataSect.dataDict[addr], 16))
+                # Loop through all possible addresses
+                # if the current addr is not in usedDataSegs[]
+                    notUsedStart = 0
+                    notUsedEnd = 0
+                for i in range(ADDR_RANGE - 1):
 
-            # Loop through all possible addresses
-            # if the current addr is not in usedDataSegs[]
-                notUsedStart = 0
-                notUsedEnd = 0
-            for i in range(ADDR_RANGE - 1):
+                    if i not in usedDataSegs:
+                        notUsedEnd = notUsedEnd + 1
+                        continue
+                    else:
 
-                if i not in usedDataSegs:
-                    notUsedEnd = notUsedEnd + 1
-                    continue
-                else:
-                    
-                    if notUsedEnd != notUsedStart:
-                        f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(notUsedStart, notUsedEnd - 1))
-                    notUsedStart = i + 1
-                    notUsedEnd = i + 1
-                    # index = usedDataSegs.find("i")
-                    f.write("{}:{}; % {} %\n".format(str(i), "0000000000000000", "used"))
-
+                        if notUsedEnd != notUsedStart:
+                            f.write('[{} .. {}] : 0000000000000000; %EMPTY MEMORY LOCATIONS %\n'.format(notUsedStart, notUsedEnd - 1))
+                        notUsedStart = i+1
+                        notUsedEnd = i + 1
+                        # index = usedDataSegs.find("i")
+                        f.write("{}:{}; % {} %\n".format(str(i), "0000000000000000", "used"))
             f.write('END;\n')
 
 def calculateJumps(sectList):
@@ -368,6 +416,15 @@ def translateSections(sectList):
                     # jz0
 
                 # handles instructions with the reg reg parameters
+
+                if token[0] == "not":
+                    if (token[1] not in reg):
+                        print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
+                        continue
+                    sect.translatedData.append(regRegInstr[token[0]] + reg[token[1]] + "00000")
+                    sect.translateListComments.append(token)
+                    continue
+
                 if (token[0] in regRegInstr):
                     if (token[1] not in reg):
                         print("Error: Invalid Syntax in line {} -> {}".format(sect.originalLineNum[line],token))
